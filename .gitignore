@@ -1,2 +1,6 @@
 # Ignore Pycharm's folder
 .idea/*
+dist/*
+build/*
+telebot.egg-info/*
+
