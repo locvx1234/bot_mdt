@@ -1,22 +1,24 @@
 """Network plugin
 /network in openstack!
 """
-from keystoneauth1.identity import v2
-from keystoneauth1 import session
-from keystoneclient.v2_0 import client
-from neutronclient.v2_0 import client
 import pprint
+from keystoneauth1.identity import v3
+from keystoneauth1 import session
+from neutronclient.v2_0 import client
 
 
 def authenticate():
-    auth_url = 'http://192.168.100.50:5000/v2.0'
-    username = 'admin'
-    password = 'Welcome123'
-    tenant_name = 'admin'
-    auth = v2.Password(username=username, password=password, tenant_name=tenant_name, auth_url=auth_url)
+    IP = '192.168.100.114'
+    USERNAME = 'admin'
+    PASSWORD = 'locdev'
+    PROJECT_NAME = 'admin'
+    AUTH_URL = 'http://{}/identity/v3'.format(IP)
+    auth = v3.Password(auth_url=AUTH_URL,
+                       user_domain_name='default',
+                       username=USERNAME,password=PASSWORD,
+                       project_domain_name='default',
+                       project_name=PROJECT_NAME)
     sess = session.Session(auth=auth)
-    # token = sess.get_token()
-    # print(token)
     return sess
 
 def handle(bot, update, args):

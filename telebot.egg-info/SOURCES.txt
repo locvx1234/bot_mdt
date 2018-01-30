@@ -12,6 +12,7 @@ telebot.egg-info/SOURCES.txt
 telebot.egg-info/dependency_links.txt
 telebot.egg-info/top_level.txt
 telebot/plugins/__init__.py
+telebot/plugins/check.py
 telebot/plugins/echo.py
 telebot/plugins/meditech.py
 telebot/plugins/network.py
