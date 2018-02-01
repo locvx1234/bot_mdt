@@ -21,8 +21,17 @@ def authenticate():
     sess = session.Session(auth=auth)
     return sess
 
+def str_to_bool(s):
+    if s == 'True' or s == 'true':
+         return True
+    elif s == 'False' or s == 'false':
+         return False
+    else:
+         raise ValueError
+
 def handle(bot, update, args):
     sess = authenticate()
+
     neutron = client.Client(session=sess)
     networks = neutron.list_networks()
     pp = pprint.PrettyPrinter(indent=4)
@@ -48,13 +57,30 @@ def handle(bot, update, args):
                 update.message.reply_text(network_name + ' don\'t exist!')
             return
         elif action == 'create':
-            network_name = args.pop(0)
-            if network_name in network_list:
-                update.message.reply_text(network_name + ' already exist!')
-            else:
-                network_create = {'name': network_name, 'admin_state_up': True}
-                neutron.create_network({'network': network_create})
-                update.message.reply_text('Create network complete!')
+            network_options = {'admin_state_up': True, 'shared': False}
+            keys_type = {'name':'str', 'admin_state_up':'bool', 'shared':'bool'}
+            try:
+                print(args)
+                for i in range(0, len(args), 2):
+                    if args[i].startswith("-"):
+                        _key = args[i][1:]
+                        if (_key in keys_type):
+                            if keys_type[_key] == 'bool':
+                                args[i+1] = str_to_bool(args[i+1])
+                            network_options[_key] = args[i+1]
+                        else:
+                            raise ValueError
+                    else:
+                        raise ValueError
+                print(network_options)
+                if network_options['name'] in network_list:
+                    update.message.reply_text(network_options['name'] + ' already exist!')
+                else:
+                    neutron.create_network({'network': network_options})
+                    update.message.reply_text('Create network complete!')
+            except(IndexError, ValueError):
+                update.message.reply_text(
+                    'Usage: /network create -name <instance-name> -shared <True/False> -admin_state_up <True/False>')
             return
         elif action == 'delete':
             network_name = args.pop(0)
