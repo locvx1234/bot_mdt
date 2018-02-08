@@ -22,7 +22,6 @@ def authenticate(ip, username, password, proj_name):
 def str_to_bool(s):
     """
     Convert from specific string to bool value
-    :param s:
     :return: boolean
     """
     if s == 'True' or s == 'true':
@@ -88,16 +87,15 @@ def show_network(networks, subnets, network_name):
     return msg
 
 
-def create_network(neutron, args):
+def create_network(neutron, network_name, args):
     """
     Create a network
-    :command: /network create -name <network-name>
+    :command: /network create <network name>
             [-admin_state_up <True/False> -shared <True/False>]
     """
-    network_options = {'name': '', 'admin_state_up': True, 'shared': False}  # default
-    keys_type = {'name': 'str', 'admin_state_up': 'bool', 'shared': 'bool'}
+    network_options = {'name': network_name, 'admin_state_up': True, 'shared': False}  # default
+    keys_type = {'admin_state_up': 'bool', 'shared': 'bool'}
     try:
-        print(args)
         for i in range(0, len(args), 2):
             if args[i].startswith("-"):
                 _key = args[i][1:]
@@ -110,11 +108,10 @@ def create_network(neutron, args):
                     return msg
             else:
                 raise ValueError
-        print(network_options)
         neutron.create_network({'network': network_options})
         msg = 'Create network complete!'
     except(IndexError, ValueError):
-        msg = 'Usage: /network create -name <instance-name> ' \
+        msg = 'Usage: /network create <network name> ' \
               '-shared <True/False> -admin_state_up <True/False>'
     return msg
 
@@ -193,7 +190,8 @@ def handle(bot, update, args):
             update.message.reply_text(msg)
             return
         elif action == 'create':
-            msg = create_network(neutron, args)
+            network_name = args.pop(0)
+            msg = create_network(neutron, network_name, args)
             update.message.reply_text(msg)
             return
         elif action == 'delete':
@@ -205,7 +203,6 @@ def handle(bot, update, args):
             raise ValueError
     except(IndexError, ValueError):
         update.message.reply_text(
-            'Usage: /network list or /network show <name-network> or /network delete <name-network>')
-
-
-
+            'Usage: \n  - /network list to list all network  '
+            '\n  - /network show <name-network> to show detail a network'
+            '\n  - /network delete <name-network> to delete a network')

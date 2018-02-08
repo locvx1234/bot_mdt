@@ -79,7 +79,7 @@ def show_subnet(networks, subnets, subnet_name):
 
                 msg += 'ID: ' + str(identity) + '\n' + 'Name: ' + str(name) + '\n' + \
                        'DHCP: ' + str(dhcp) + '\n' + 'IP Version: ' + str(ip_version) + '\n' + \
-                       'Cidr: ' + cidr + '\n' + 'Gateway: ' + gateway + '\n' + 'Network: ' + network + '\n' + \
+                       'Cidr: ' + cidr + '\n' + 'Gateway: ' + str(gateway) + '\n' + 'Network: ' + network + '\n' + \
                        'Pool: ' + pool_start + ' - ' + pool_end + '\n\n'
                 print(msg)
     return msg
