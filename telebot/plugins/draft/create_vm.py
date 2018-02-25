@@ -15,13 +15,16 @@ logger = logging.getLogger(__name__)
 
 def keyboard_item(list_items):
     keyboard_items = []
+    id_items = []
     for item in list_items:
-        data_items = item.split(':')
+        data_items = item.split(' : ')
         name_item = data_items[0]
         id_item = data_items[1]
         keyboard_items.append([InlineKeyboardButton(name_item,
                                                  callback_data=id_item)])
-    return keyboard_items
+        id_items.append(id_item)
+    keyboard_items.append([InlineKeyboardButton('back', callback_data='back')])
+    return keyboard_items, id_items
 
 def dm(bot, update):
 
@@ -34,28 +37,55 @@ def dm(bot, update):
     update.message.reply_text('Please choose:', reply_markup=reply_markup)
 
 def button(bot, update):
+    keyboard = [[InlineKeyboardButton("networks", callback_data='network'),
+                 InlineKeyboardButton("images",
+                                      callback_data='image')]]
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+
     list_networks, list_images = create_vm()
-    keyboard_network = keyboard_item(list_networks)
-    keyboard_image = keyboard_item(list_images)
+    keyboard_network, id_networks = keyboard_item(list_networks)
+    keyboard_image, id_images = keyboard_item(list_images)
     reply_markup_network = InlineKeyboardMarkup(keyboard_network)
     reply_markup_image = InlineKeyboardMarkup(keyboard_image)
-    query = update.callback_query
-    bot.edit_message_text(text="Selected option - dkm: {}".format(query.data),
-                           chat_id=query.message.chat_id,
-                           message_id=query.message.message_id)
-    if query.data == 'network':
-        bot.edit_message_text(text="Selected option: {}".format(query.data),
-                          chat_id=query.message.chat_id,
-                          message_id=query.message.message_id,
+    # bot.edit_message_text(text="Selected option - dkm: {}".format(query.data),
+    #                        chat_id=query.message.chat_id,
+    #                        message_id=query.message.message_id)
+    if update.callback_query.data == 'network':
+        # list_networks, list_images = create_vm()
+        # keyboard_network, id_items = keyboard_item(list_networks)
+        # reply_markup_network = InlineKeyboardMarkup(keyboard_network)
+        bot.edit_message_text(text="Selected option: {}".format(update.callback_query.data),
+                          chat_id=update.callback_query.message.chat_id,
+                          message_id=update.callback_query.message.message_id,
                               reply_markup=reply_markup_network)
+        # print(list_networks)
+        # print(id_networks)
 
-    if query.data == 'image':
-        bot.edit_message_text(text="Selected option: {}".format(query.data),
-                              chat_id=query.message.chat_id,
-                              message_id=query.message.message_id,
+
+    if update.callback_query.data == 'image':
+        # list_networks, list_images = create_vm()
+        # keyboard_image = keyboard_item(list_images)
+        # reply_markup_image = InlineKeyboardMarkup(keyboard_image)
+        bot.edit_message_text(text="Selected option: {}".format(update.callback_query.data),
+                              chat_id=update.callback_query.message.chat_id,
+                              message_id=update.callback_query.message.message_id,
                               reply_markup=reply_markup_image)
-    print(query.data)
 
+    if update.callback_query.data == 'back':
+        bot.edit_message_text(text="Selected option: ",
+                              chat_id=update.callback_query.message.chat_id,
+                              message_id=update.callback_query.message.message_id,
+                              reply_markup=reply_markup)
+
+    if update.callback_query.data in id_networks:
+        network = update.callback_query.data
+        print("id network is : {}".format(network))
+
+    if update.callback_query.data in id_images:
+        image = update.callback_query.data
+        print("id image is : {}".format(image))
 
 
 
