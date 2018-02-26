@@ -11,7 +11,7 @@ from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, Conversa
 
 TELEGRAM_HTTP_API_TOKEN = '529971138:AAHaRo7KYsjfCwUhe9x3r7ilFftEDUwNyKM'
 
-FIRST, SECOND, THIRD, FOURTH, SIXTH = range(5)
+FIRST, SECOND, THIRD = range(3)
 data = {}
 def start(bot, update):
     keyboard = [
@@ -32,7 +32,7 @@ def first(bot, update):
     bot.edit_message_text(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
-        text=u"Select network, Press network"
+        text=u"Select network"
     )
 
     reply_markup = InlineKeyboardMarkup(keyboard_network)
@@ -132,7 +132,7 @@ conv_handler = ConversationHandler(
 )
 
 updater.dispatcher.add_handler(conv_handler)
-print(data)
+
 updater.start_polling()
 
 updater.idle()
