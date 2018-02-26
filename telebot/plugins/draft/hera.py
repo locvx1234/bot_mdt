@@ -66,6 +66,10 @@ def third(bot, update):
     query = update.callback_query
     data['image'] = query.data
     print(data)
+    bot.edit_message_text(
+        chat_id=query.message.chat_id,
+        message_id=query.message.message_id,
+        text=str(data))
     return
 
 def authenticate(auth_url= None, username= None ,password= None ,
