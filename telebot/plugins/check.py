@@ -7,8 +7,6 @@ AUTH_URL = 'http://{}/identity/v3'.format(IP)
 url_monitor_ha = '192.168.100.37:80/monitor'
 user_name_ha = 'root'
 pass_ha = 'meditech2017'
-root@devstack:~/bot_mdt# vim telebot/plugins/check.py 
-root@devstack:~/bot_mdt# cat telebot/plugins/check.py 
 from keystoneauth1.identity import v3
 from keystoneauth1 import session
 from neutronclient.v2_0 import client
