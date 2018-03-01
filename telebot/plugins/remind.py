@@ -1,17 +1,19 @@
-"""Remind everyone in team
+"""Remind everyone in team.
+
 Usage:
-/remind set hour:minute reminder- Remind something at hour:minute!
+/remind set hour:minute reminder- Remind something at hour:minute.
 /remind unset - Unset reminder.
 """
 import datetime
 
-from telegram import ParseMode
-
 from telebot import emojies
+
+from telegram import ParseMode
 
 
 def do_remind(bot, job):
-    reminder = '{} `{}` {}' . format(
+    """Do something which we want to remind."""
+    reminder = '{} `{}` {}'.format(
         emojies.bell, job.context['reminder'],
         emojies.bell)
 
@@ -22,7 +24,7 @@ def do_remind(bot, job):
 
 
 def handle(bot, update, args, job_queue, chat_data):
-    """Remind something at xx:xx everyday!"""
+    """Remind something at xx:xx everyday."""
     chat_id = update.message.chat_id
     context = {}
 

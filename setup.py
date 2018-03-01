@@ -1,3 +1,10 @@
+"""A setuptools based setup module.
+
+See:
+https://packaging.python.org/en/latest/distributing.html
+https://github.com/pypa/sampleproject
+"""
+
 try:
     from setuptools import setup
 except ImportError:
@@ -5,7 +12,7 @@ except ImportError:
 
 try:
     longdesc = open('README.md').read()
-except:
+except Exception:
     longdesc = ''
 
 setup(
