@@ -41,7 +41,9 @@ class Bot(object):
         self.dispatcher.add_handler(help_handler)
         # Init additional plugins handlers
         for plugin in self.plugins.keys():
-            if plugin in settings.JOB_PLUGINS:
+            if plugin in settings.Continue_PLUGINS:
+                continue
+            elif plugin in settings.JOB_PLUGINS:
                 _handler = CommandHandler(plugin,
                                           self.plugins[plugin]['handler'],
                                           pass_args=True,
@@ -53,7 +55,10 @@ class Bot(object):
             elif plugin in settings.NORMAL_PLUGINS:
                 _handler = CommandHandler(plugin,
                                           self.plugins[plugin]['handler'])
-            self.dispatcher.add_handler(_handler)
+            else:
+                _handler = None
+            if _handler != None:
+                self.dispatcher.add_handler(_handler)
         self.dispatcher.add_error_handler(self.error)
 
     def error(self, bot, update, error):
@@ -110,23 +115,25 @@ class Bot(object):
 
     def init_plugins(self):
         for _, name, _ in pkgutil.iter_modules(telebot.plugins.__path__):
-            try:
-                LOG.debug('Plugin: {}'.format(name))
-                module = importlib.import_module('telebot.plugins.' + name)
-                module_name = module.__name__.split('.')[-1]
-                _info = {
-                    'whatis': 'Unknown command',
-                    'usage': 'Unknown usage',
-                    'handler': getattr(module, 'handle')
-                }
+            if name in settings.JOB_PLUGINS or name in settings.NORMAL_PLUGINS 
+                or name in settings.CONV_PLUGINS:
+                try:
+                    LOG.debug('Plugin: {}'.format(name))
+                    module = importlib.import_module('telebot.plugins.' + name)
+                    module_name = module.__name__.split('.')[-1]
+                    _info = {
+                        'whatis': 'Unknown command',
+                        'usage': 'Unknown usage',
+                        'handler': getattr(module, 'handle')
+                    }
 
-                if module.__doc__:
-                    _info['whatis'] = module.__doc__.split('\n')[0]
-                    _info['usage'] = module.__doc__
-                LOG.info(_info)
-                self.plugins[module_name] = _info
-            except Exception:
-                LOG.warning('Import failed on module {}, module not loaded!'.
-                            format(name))
-                LOG.warning('{}'.format(sys.exc_info()[0]))
-                LOG.warning('{}'.format(traceback.format_exc()))
+                    if module.__doc__:
+                        _info['whatis'] = module.__doc__.split('\n')[0]
+                        _info['usage'] = module.__doc__
+                    LOG.info(_info)
+                    self.plugins[module_name] = _info
+                except Exception:
+                    LOG.warning('Import failed on module {}, module not loaded!'.
+                                format(name))
+                    LOG.warning('{}'.format(sys.exc_info()[0]))
+                    LOG.warning('{}'.format(traceback.format_exc()))
