@@ -115,7 +115,8 @@ class Bot(object):
 
     def init_plugins(self):
         for _, name, _ in pkgutil.iter_modules(telebot.plugins.__path__):
-            if name in settings.JOB_PLUGINS or name in settings.NORMAL_PLUGINS or name in settings.CONV_PLUGINS:
+            if name in settings.JOB_PLUGINS or name in settings.NORMAL_PLUGINS \
+                    or name in settings.CONV_PLUGINS:
                 try:
                     LOG.debug('Plugin: {}'.format(name))
                     module = importlib.import_module('telebot.plugins.' + name)
