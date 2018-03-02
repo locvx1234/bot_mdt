@@ -57,7 +57,7 @@ class Bot(object):
                                           self.plugins[plugin]['handler'])
             else:
                 _handler = None
-            if _handler != None:
+            if _handler:
                 self.dispatcher.add_handler(_handler)
         self.dispatcher.add_error_handler(self.error)
 
