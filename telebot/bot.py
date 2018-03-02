@@ -1,18 +1,17 @@
-import logging
 import importlib
+import logging
 import os
 import pkgutil
 import sys
 import traceback
 
-from telegram.ext import CommandHandler
-from telegram.ext import Filters
-from telegram.ext import MessageHandler
-from telegram.ext import Updater
-
 import telebot.plugins
+
 from telebot import emojies
 from telebot import settings
+
+from telegram.ext import CommandHandler
+from telegram.ext import Updater
 
 LOG = logging.getLogger(__name__)
 
@@ -22,6 +21,8 @@ def strip_extension(lst):
 
 
 class Bot(object):
+    """Bot class."""
+
     def __init__(self, token):
         self.scheduler = None
         self.updater = Updater(token=token)
@@ -31,7 +32,7 @@ class Bot(object):
         self.init_handlers()
 
     def init_handlers(self):
-        """Init all command handlers"""
+        """Init all command handlers."""
         self.init_plugins()
         # Init general command handlers
         start_handler = CommandHandler('start', self.start)
@@ -40,15 +41,24 @@ class Bot(object):
         self.dispatcher.add_handler(help_handler)
         # Init additional plugins handlers
         for plugin in self.plugins.keys():
-            _handler = CommandHandler(plugin, self.plugins[plugin]['handler'])
-            if plugin in settings.JOB_PLUGINS:
+            if plugin in settings.Continue_PLUGINS:
+                continue
+            elif plugin in settings.JOB_PLUGINS:
                 _handler = CommandHandler(plugin,
                                           self.plugins[plugin]['handler'],
                                           pass_args=True,
                                           pass_job_queue=True,
                                           pass_chat_data=True)
-
-            self.dispatcher.add_handler(_handler)
+            elif plugin in settings.CONV_PLUGINS:
+                # NOTE(namnh): Will do something in here
+                pass
+            elif plugin in settings.NORMAL_PLUGINS:
+                _handler = CommandHandler(plugin,
+                                          self.plugins[plugin]['handler'])
+            else:
+                _handler = None
+            if _handler:
+                self.dispatcher.add_handler(_handler)
         self.dispatcher.add_error_handler(self.error)
 
     def error(self, bot, update, error):
@@ -57,10 +67,15 @@ class Bot(object):
 
     def _get_commands(self):
         commands = []
+        all_plugins = (settings.NORMAL_PLUGINS + settings.CONV_PLUGINS +
+                       settings.JOB_PLUGINS)
         for name, helper in self.plugins.items():
-            command = '/' + name
-            whatis = helper['whatis']
-            commands.append([command, whatis])
+            if name in all_plugins:
+                command = '/' + name
+                whatis = helper['whatis']
+                commands.append([command, whatis])
+            else:
+                continue
         return commands
 
     def run(self):
@@ -69,7 +84,7 @@ class Bot(object):
 
     def start(self, bot, update):
         bot.send_message(chat_id=update.message.chat_id,
-                         text='Hello! Meditech bot is really. Please enter '
+                         text='Hello! Meditech bot is ready. Please enter '
                               '/help to show all command that will help you.')
 
     def stop(self):
@@ -88,35 +103,37 @@ class Bot(object):
         user_input = update.message.text.split(' ')
         if len(user_input) == 1:
             text = emojies.information_source + \
-                ' The following commands are available:\n'
+                   ' The following commands are available:\n'
 
             for command in commands:
                 text += command[0] + '-' + command[1] + '\n'
         elif len(user_input) == 2 and user_input[1] in command_names:
             text = emojies.information_source + ' ' + \
-                self.plugins[user_input[1]]['usage']
+                   self.plugins[user_input[1]]['usage']
 
         bot.send_message(chat_id=update.message.chat_id, text=text)
 
     def init_plugins(self):
         for _, name, _ in pkgutil.iter_modules(telebot.plugins.__path__):
-            try:
-                LOG.debug('Plugin: {}' . format(name))
-                module = importlib.import_module('telebot.plugins.' + name)
-                module_name = module.__name__.split('.')[-1]
-                _info = {
-                    'whatis': 'Unknown command',
-                    'usage': 'Unknown usage',
-                    'handler': getattr(module, 'handle')
-                }
+            if name in settings.JOB_PLUGINS or name in settings.NORMAL_PLUGINS \
+                    or name in settings.CONV_PLUGINS:
+                try:
+                    LOG.debug('Plugin: {}'.format(name))
+                    module = importlib.import_module('telebot.plugins.' + name)
+                    module_name = module.__name__.split('.')[-1]
+                    _info = {
+                        'whatis': 'Unknown command',
+                        'usage': 'Unknown usage',
+                        'handler': getattr(module, 'handle')
+                    }
 
-                if module.__doc__:
-                    _info['whatis'] = module.__doc__.split('\n')[0]
-                    _info['usage'] = module.__doc__
-                LOG.info(_info)
-                self.plugins[module_name] = _info
-            except:
-                LOG.warning('Import failed on module {}, module not loaded!' .
-                            format(name))
-                LOG.warning('{}' . format(sys.exc_info()[0]))
-                LOG.warning('{}' . format(traceback.format_exc()))
+                    if module.__doc__:
+                        _info['whatis'] = module.__doc__.split('\n')[0]
+                        _info['usage'] = module.__doc__
+                    LOG.info(_info)
+                    self.plugins[module_name] = _info
+                except Exception:
+                    LOG.warning('Import failed on module {}, module not loaded!'.
+                                format(name))
+                    LOG.warning('{}'.format(sys.exc_info()[0]))
+                    LOG.warning('{}'.format(traceback.format_exc()))
