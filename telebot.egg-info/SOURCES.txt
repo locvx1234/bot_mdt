@@ -1,4 +1,5 @@
 README.md
+setup.py
 bin/bot_mdt
 telebot/__init__.py
 telebot/bot.py
@@ -12,7 +13,10 @@ telebot.egg-info/SOURCES.txt
 telebot.egg-info/dependency_links.txt
 telebot.egg-info/top_level.txt
 telebot/plugins/__init__.py
+telebot/plugins/check.py
 telebot/plugins/echo.py
 telebot/plugins/meditech.py
+telebot/plugins/network.py
 telebot/plugins/openstack_utils.py
 telebot/plugins/remind.py
+telebot/plugins/subnet.py
