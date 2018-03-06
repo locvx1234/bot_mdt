@@ -61,14 +61,6 @@ class Neutron(Base):
         else:
             return False
 
-    # def _count_port(self, network_id):
-    #     # number of port with id = network_id
-    #     count = 0
-    #     for item in self.ports['ports']:
-    #         if item['network_id'] == network_id:
-    #             count += 1
-    #     return count
-
     def list_network(self):
         """
         List all network

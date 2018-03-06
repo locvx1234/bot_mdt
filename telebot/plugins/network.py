@@ -1,11 +1,6 @@
 """Network plugin
 /network in openstack!
 """
-import pprint
-from keystoneauth1.identity import v3
-from keystoneauth1 import session
-from neutronclient.v2_0 import client
-# from prettytable import PrettyTable
 from telebot.plugins import openstackutils
 
 def handle(bot, update, args):
