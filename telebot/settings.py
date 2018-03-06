@@ -9,3 +9,6 @@ ARGS_PLUGINS = ['network', 'subnet', 'check']
 
 # List of plugins which use normal command
 NORMAL_PLUGINS = ['echo', 'meditech']
+
+
+Continue_PLUGINS = ['openstackutils']
