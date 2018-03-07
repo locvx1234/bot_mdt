@@ -1,8 +1,9 @@
-import configparser
-
+import pprint
 from keystoneauth1.identity import v3
 from keystoneauth1 import session
 from neutronclient.v2_0 import client as neutronclient
+
+from telebot.plugins import openstackutils
 
 
 def str_to_bool(s):
@@ -17,23 +18,9 @@ def str_to_bool(s):
     else:
         raise ValueError
 
-
-class Base:
+class Neutron(openstackutils.Base):
     def __init__(self, ip, username, password, project_name):
-        self.ip = ip
-        self.username = username
-        self.password = password
-        self.project_name = project_name
-        auth_url = 'http://{}/identity/v3'.format(self.ip)
-        auth = v3.Password(auth_url=auth_url, user_domain_name='default',
-                           username=self.username, password=self.password,
-                           project_domain_name='default', project_name=self.project_name)
-        self.sess = session.Session(auth=auth)
-
-
-class Neutron(Base):
-    def __init__(self, ip, username, password, project_name):
-        Base.__init__(self, ip, username, password, project_name)
+        super().__init__(ip, username, password, project_name)
         self.neutron = neutronclient.Client(session=self.sess)
         self.networks = self.neutron.list_networks()
         self.subnets = self.neutron.list_subnets()
@@ -67,71 +54,35 @@ class Neutron(Base):
     def list_network(self):
         """
         List all network
-        :command: /network list
+        Extract a list networks with a subset of keys
         """
-        msg = 'List network : \n\n'
+        network_list = []
         for item in self.networks["networks"]:
-            if item["name"] != '':
-                name = item["name"]
-            else:
-                name = '(' + item["id"][:13] + ')'
-
-            subnets_name = ''
-            for subnet in item["subnets"]:
-                subnet_name = self._find_network_name_by_id(self.subnets, subnet)
-                subnets_name += '   - ' + subnet_name + '\n'
-            msg += 'Name : ' + name + '\nSubnet:\n' + subnets_name + '\n\n'
-        return msg
+            network_keys = {'admin_state_up', 'description', 'id', 'name', 'project_id', 'shared',
+                            'status', 'subnets'}
+            network_dict = {key: value for key, value in item.items() if key in network_keys}
+            network_list.append(network_dict)
+        return network_list
 
     def show_network(self, network_name):
         """
         Show infomation of network by name
         """
-        if not any(item['name'] == network_name for item in self.networks["networks"]):
-            msg = network_name + ' don\'t exist!'
-        else:
-            msg = ''
-            for item in self.networks["networks"]:
-                if item['name'] == network_name:
-                    identity = item['id']
-                    name = item['name']
-                    status = item['status']
-                    subnets_item = item['subnets']
-                    subnets_list = ''
-                    for subnet in subnets_item:
-                        subnets_list += '\n     - ' + self._find_network_name_by_id(self.subnets, subnet) + '  -  ' + subnet
-                    msg += 'ID: ' + str(identity) + '\n' + 'Name: ' + str(name) + '\n' + \
-                           'Status: ' + str(status) + '\n' + 'Subnet: ' + subnets_list + '\n\n'
-                    print(msg)
-        return msg
+        network_list = []
+        for item in self.list_network():
+            if item['name'] == network_name:
+                network_list.append(item)
+        return network_list
 
-    def create_network(self, network_name, args):
+    def create_network(self, network_options):
         """
         Create a network
         :command: /network create <network name>
                 [-admin_state_up <True/False> -shared <True/False>]
         """
-        network_options = {'name': network_name, 'admin_state_up': True, 'shared': False}  # default
-        keys_type = {'admin_state_up': 'bool', 'shared': 'bool'}
-        try:
-            for i in range(0, len(args), 2):
-                if args[i].startswith("-"):
-                    _key = args[i][1:]
-                    if _key in keys_type:
-                        if keys_type[_key] == 'bool':
-                            args[i+1] = str_to_bool(args[i+1])
-                        network_options[_key] = args[i+1]
-                    else:
-                        msg = 'Non-existent option : ' + _key
-                        return msg
-                else:
-                    raise ValueError
-            self.neutron.create_network({'network': network_options})
-            msg = 'Create network complete!'
-        except(IndexError, ValueError):
-            msg = 'Usage: /network create <network name> ' \
-                  '-shared <True/False> -admin_state_up <True/False>'
-        return msg
+        # network_options = {'name': network_name, 'admin_state_up': True, 'shared': False}  # default
+        self.neutron.create_network({'network': network_options})
+        return
 
     def delete_port(self, network_id):
         """
