@@ -4,6 +4,7 @@
 import pprint
 from telebot.plugins import networkutils
 
+
 def handle(bot, update, args):
     net = networkutils.Neutron('192.168.100.114', 'admin', 'locdev', 'admin')
     try:

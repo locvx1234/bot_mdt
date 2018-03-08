@@ -1,22 +1,63 @@
 import pprint
-from keystoneauth1.identity import v3
-from keystoneauth1 import session
+import ipaddress
 from neutronclient.v2_0 import client as neutronclient
 
 from telebot.plugins import openstackutils
 
 
 def str_to_bool(s):
-    """
-    Convert from specific string to bool value
-    :return: boolean
-    """
+    """Convert from specific string to bool value"""
     if s == 'True' or s == 'true':
         return True
     elif s == 'False' or s == 'false':
         return False
     else:
         raise ValueError
+
+
+def validate_address(addr):
+    try:
+        ipaddress.ip_address(addr)
+        return True
+    except(IndexError, ValueError):
+        return False
+
+
+def validate_network(addr):
+    try:
+        ipaddress.ip_network(addr)
+        return True
+    except(IndexError, ValueError):
+        return False
+
+def validate_ip_version(num):
+    if num == '4' or num == '6':
+        return int(num)
+    else:
+        return False
+
+def get_address_version(addr):
+    address = ipaddress.ip_address(addr)
+    ver = address.version
+    return ver
+
+
+def get_network_version(addr):
+    address = ipaddress.ip_address(addr)
+    ver = address.version
+    return ver
+
+
+def check_overlaps(cidr, cidr_list):
+    """
+    Check a subnet overlaps with other subnet in the network
+    :return: True if overlaps
+    """
+    for item in cidr_list:
+        if cidr.overlaps(item):
+            return True
+    return False
+
 
 class Neutron(openstackutils.Base):
     def __init__(self, ip, username, password, project_name):
@@ -26,24 +67,25 @@ class Neutron(openstackutils.Base):
         self.subnets = self.neutron.list_subnets()
         self.ports = self.neutron.list_ports()
 
-    def _find_network_name_by_id(self, subnets, subnet_id):
-        for item in subnets["subnets"]:
+    # unused
+    def _find_network_name_by_id(self, subnet_id):
+        for item in self.subnets["subnets"]:
             if item["id"] == subnet_id and item["name"] != '':
                 return item["name"]
             elif item["id"] == subnet_id:
                 return '(' + item["id"][:13] + ')'
         return
 
+    # unused
     def _count_network(self, network_name):
-        """
-        how many networks are named 'network_name'
-        """
+        """How many networks are named 'network_name'"""
         count = 0
         for network in self.networks["networks"]:
             if network['name'] == network_name:
                 count += 1
         return count
 
+    # unused
     def _check_network_id_exist(self, network_id):
         for network in self.networks["networks"]:
             if network['id'] == network_id:
@@ -64,15 +106,11 @@ class Neutron(openstackutils.Base):
             network_list.append(network_dict)
         return network_list
 
-    def show_network(self, network_name):
-        """
-        Show infomation of network by name
-        """
-        network_list = []
-        for item in self.list_network():
-            if item['name'] == network_name:
-                network_list.append(item)
-        return network_list
+    def show_network(self, network_id):
+        """Show information of network by id"""
+        for network in self.list_network():
+            if network['id'] == network_id:
+                return network 
 
     def create_network(self, network_options):
         """
@@ -84,34 +122,72 @@ class Neutron(openstackutils.Base):
         self.neutron.create_network({'network': network_options})
         return
 
-    def delete_port(self, network_id):
-        """
-        Delete all interfaces attached to network
-        """
+    def _delete_port_network(self, network_id):
+        """Delete all interfaces attached to network"""
         for port in self.ports['ports']:
             if port['network_id'] == network_id:
                 self.neutron.delete_port(port['id'])
         return
 
-    def delete_network(self, network_name):
-        msg = ''
-        if self._check_network_id_exist(network_name):  # delete by id, `network_name` are understood as `network_id`
-            self.delete_port(network_name)
-            self.neutron.delete_network(network_name)
-            msg = 'Delete network complete!'
-        else:   # delete by name
-            if self._count_network(network_name) == 1:
-                network_id = None
-                for item in self.networks["networks"]:
-                    if item["name"] == network_name:
-                        network_id = item["id"]
-                        print("ID : " + network_id)
-                if network_id is not None:
-                    self.delete_port(network_id)
-                    self.neutron.delete_network(network_id)
-                    msg = 'Delete network complete!'
-            elif self._count_network(network_name) > 1:
-                msg = network_name + ' is duplicate. Use id instead'
-            else:      # equal 0
-                msg = network_name + ' don\'t exist!'
-        return msg
+    def delete_network(self, network_id):
+        """Delete network by id """
+        self._delete_port_network(network_id)
+        self.neutron.delete_network(network_id)
+        return 
+
+    def list_subnet(self, network_id):
+        """
+        List all subnet of a network
+        Extract a list subnets with a subset of keys
+        """
+        subnet_list = []
+        for item in self.subnets["subnets"]:
+            if item["network_id"] == network_id:
+                subnet_keys = {'allocation_pools', 'cidr', 'dns_nameservers', 'enable_dhcp', 'gateway_ip', 'id',
+                               'ip_version', 'name', 'network_id', 'project_id'}
+                subnet_dict = {key: value for key, value in item.items() if key in subnet_keys}
+                subnet_list.append(subnet_dict)
+        return subnet_list
+
+    def list_subnet_id(self, network_id):
+        """Get all subnet id in a network"""
+        for network in self.networks["networks"]:
+            if network["id"] == network_id:
+                return network["subnets"]
+
+    def list_cidr(self, network_id):
+        """Get all subnet cidr in network"""
+        cidr_list = []
+        for subnet in self.list_subnet(network_id):
+            cidr_list.append(ipaddress.ip_network(subnet["cidr"]))
+        return cidr_list
+
+    def show_subnet(self, subnet_id):
+        """Show information of s by id"""
+        for subnet in self.list_subnet():
+            if subnet['id'] == subnet_id:
+                return subnet
+
+    def create_subnet(self, subnet_options):
+        """Create a subnet
+            type of `subnet_options` : dict
+        """
+        self.neutron.create_subnet({'subnet': subnet_options})
+        return
+
+    def _delete_port_subnet(self, subnet_id):
+        """Delete all interfaces attached to subnet"""
+        for port in self.ports['ports']:
+            for item in port['fixed_ips']:
+                if item['subnet_id'] == subnet_id:
+                    self.neutron.delete_port(port['id'])
+        return
+
+    def delete_subnet(self, subnet_id):
+        """Delete subnet by id """
+        self._delete_port_subnet(subnet_id)
+        self.neutron.delete_subnet(subnet_id)
+        return
+
+
+
