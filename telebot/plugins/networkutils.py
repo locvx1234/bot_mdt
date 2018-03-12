@@ -60,8 +60,8 @@ def check_overlaps(cidr, cidr_list):
 
 
 class Neutron(openstackutils.Base):
-    def __init__(self, ip, username, password, project_name):
-        super().__init__(ip, username, password, project_name)
+    def __init__(self, *args):
+        super().__init__(*args)
         self.neutron = neutronclient.Client(session=self.sess)
         self.networks = self.neutron.list_networks()
         self.subnets = self.neutron.list_subnets()
