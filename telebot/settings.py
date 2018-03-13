@@ -8,3 +8,5 @@ CONV_PLUGINS = ['create']
 NORMAL_PLUGINS = ['echo', 'meditech']
 
 Continue_PLUGINS = ['openstackutils', 'novautils', 'neutronutils']
+
+ARGS_PLUGINS = ['vm']

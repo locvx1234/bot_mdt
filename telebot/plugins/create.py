@@ -13,6 +13,8 @@ def handle(bot, update, args):
         [InlineKeyboardButton(u"Network", callback_data=str(FIRST))]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
+    print(reply_markup)
+    print(type(reply_markup))
     update.message.reply_text(
         u"Start go to hera, Press network",
         reply_markup=reply_markup
@@ -48,9 +50,6 @@ def second(bot, update):
     query = update.callback_query
     data["network"] = query.data
     dict_images = nov.list_images()
-    print('+++++++++++++++++++++')
-    print(dict_images)
-    print('+++++++++++++++++++++')
     keyboard_images = nov.keybroad_items(dict_images)
     bot.edit_message_text(
         chat_id=query.message.chat_id,
@@ -58,6 +57,7 @@ def second(bot, update):
         text=u"select image"
     )
     reply_markup = InlineKeyboardMarkup(keyboard_images)
+    print('abc : {0}'.format(reply_markup))
     bot.edit_message_reply_markup(
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
