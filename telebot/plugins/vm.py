@@ -34,3 +34,9 @@ def handle(bot, update, args):
         print(msg)
         update.message.reply_text(u"VM status",
                                   reply_markup=msg)
+    elif action == 'stop':
+        name_vm = args.pop(0)
+        nov.control(name_vm= name_vm, action_vm= action)
+    elif action == 'start':
+        name_vm = args.pop(0)
+        nov.control(name_vm=name_vm, action_vm= action)
