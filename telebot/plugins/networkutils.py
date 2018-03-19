@@ -30,11 +30,13 @@ def validate_network(addr):
     except(IndexError, ValueError):
         return False
 
+
 def validate_ip_version(num):
     if num == '4' or num == '6':
         return int(num)
     else:
         return False
+
 
 def get_address_version(addr):
     address = ipaddress.ip_address(addr)
@@ -66,6 +68,7 @@ class Neutron(openstackutils.Base):
         self.networks = self.neutron.list_networks()
         self.subnets = self.neutron.list_subnets()
         self.ports = self.neutron.list_ports()
+        self.agents = self.neutron.list_agents()
 
     # unused
     def _find_network_name_by_id(self, subnet_id):
@@ -189,5 +192,14 @@ class Neutron(openstackutils.Base):
         self.neutron.delete_subnet(subnet_id)
         return
 
-
-
+    def list_agent(self):
+        """
+        List all agent
+        Extract a list agents with a subset of keys
+        """
+        agent_list = []
+        for item in self.agents["agents"]:
+            agent_keys = {'admin_state_up', 'agent_type', 'alive', 'host', 'id', 'topic'}
+            agent_dict = {key: value for key, value in item.items() if key in agent_keys}
+            agent_list.append(agent_dict)
+        return agent_list
