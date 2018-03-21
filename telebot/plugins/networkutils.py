@@ -66,6 +66,7 @@ class Neutron(openstackutils.Base):
         self.networks = self.neutron.list_networks()
         self.subnets = self.neutron.list_subnets()
         self.ports = self.neutron.list_ports()
+        self.agents = self.neutron.list_agents()
 
     # unused
     def _find_network_name_by_id(self, subnet_id):
@@ -188,3 +189,15 @@ class Neutron(openstackutils.Base):
         self._delete_port_subnet(subnet_id)
         self.neutron.delete_subnet(subnet_id)
         return
+
+    def list_agent(self):
+        """
+        List all agent
+        Extract a list agents with a subset of keys
+        """
+        agent_list = []
+        for item in self.agents["agents"]:
+            agent_keys = {'agent_type', 'alive', 'host'}
+            agent_dict = {key: value for key, value in item.items() if key in agent_keys}
+            agent_list.append(agent_dict)
+        return agent_list

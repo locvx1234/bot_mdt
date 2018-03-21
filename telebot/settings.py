@@ -9,4 +9,4 @@ NORMAL_PLUGINS = ['echo', 'meditech']
 
 Continue_PLUGINS = ['openstackutils', 'novautils', 'neutronutils']
 
-ARGS_PLUGINS = ['vm']
+ARGS_PLUGINS = ['vm', 'check']

@@ -33,7 +33,7 @@ class Nova(openstackutils.Base):
                 if action_vm == 'start':
                     server.start()
 
-    def services(self):
+    def service(self):
         list_info_services = []
         for service in self.services:
             list_info_service = []

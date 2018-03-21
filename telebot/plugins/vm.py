@@ -9,18 +9,21 @@ def convert_keyboard_inline(dict_items):
         row = []
         row.extend([dict_item, dict_items[dict_item]])
         list_items.append(row)
-    print('++++++++++++++')
-    print(list_items)
-    print('++++++++++++++')
+    # print('++++++++++++++')
+    # print('1 {0}'.format(list_items))
+    # print('++++++++++++++')
     for list_item in list_items:
         keyboard_row = []
-        keyboard_row.append(InlineKeyboardButton(list_item[0], callback_data='minh'))
-        keyboard_row.append(InlineKeyboardButton(list_item[1], callback_data='minh'))
+        for count,_item in enumerate(list_item):
+            keyboard_row.append(InlineKeyboardButton(list_item[count],
+                                                 callback_data='minh'))
+         # keyboard_row.append(InlineKeyboardButton(list_item[1],
+         #                                         callback_data='minh'))
         keyboard_items.append(keyboard_row)
     reply_markup = InlineKeyboardMarkup(keyboard_items)
-    print('++++++++++++++')
-    print(reply_markup)
-    print('++++++++++++++')
+    # print('++++++++++++++')
+    # print(reply_markup)
+    # print('++++++++++++++')
     return reply_markup
 
 
@@ -30,8 +33,8 @@ def handle(bot, update, args):
     if action == 'list':
         dict_servers = nov.list_vm()
         msg = convert_keyboard_inline(dict_servers)
-        print(type(msg))
-        print(msg)
+        # print(type(msg))
+        # print(msg)
         update.message.reply_text(u"VM status",
                                   reply_markup=msg)
     elif action == 'stop':

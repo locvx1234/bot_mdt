@@ -51,7 +51,6 @@ class Bot(object):
                 _handler = CommandHandler(plugin,
                                           self.plugins[plugin]['handler'],
                                           pass_args=True)
-                print('minhkma')
             elif plugin in settings.JOB_PLUGINS:
                 _handler = CommandHandler(plugin,
                                           self.plugins[plugin]['handler'],
