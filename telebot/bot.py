@@ -53,8 +53,8 @@ class Bot(object):
                                           pass_job_queue=True,
                                           pass_chat_data=True)
             elif plugin in settings.CONV_PLUGINS:
-                # NOTE(namnh): Will do something in here
-                pass
+                module = importlib.import_module('telebot.plugins.' + plugin)
+                _handler = module.conv_handler
             elif plugin in settings.NORMAL_PLUGINS:
                 _handler = CommandHandler(plugin,
                                           self.plugins[plugin]['handler'])

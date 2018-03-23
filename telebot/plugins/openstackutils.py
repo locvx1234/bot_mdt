@@ -10,7 +10,7 @@ from telebot import config
 class Base:
     def __init__(self, *args):
         if len(args) == 0:
-            self.ip =  config.IP
+            self.ip = config.IP
             self.username = config.USERNAME
             self.password = config.PASSWORD
             self.project_name = config.PROJECT_NAME

@@ -2,10 +2,10 @@
 JOB_PLUGINS = ['remind']
 
 # List of plugins that use ConverstationHandler
-CONV_PLUGINS = ['']
+CONV_PLUGINS = ['network']
 
 
-ARGS_PLUGINS = ['network', 'subnet', 'check']
+ARGS_PLUGINS = ['subnet', 'check']
 
 # List of plugins which use normal command
 NORMAL_PLUGINS = ['echo', 'meditech']
