@@ -16,7 +16,7 @@ def handle(bot, update, args):
     print(reply_markup)
     print(type(reply_markup))
     update.message.reply_text(
-        u"Start go to hera, Press network",
+        u"Press network",
         reply_markup=reply_markup
     )
     data['name'] = args.pop(0)

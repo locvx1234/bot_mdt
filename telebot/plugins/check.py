@@ -21,8 +21,8 @@ def convert_keyboard_inline(list_items):
 
 
 def handle(bot, update, args):
-    nov = novautils.Nova('192.168.100.60', 'admin', 'minhkma', 'admin')
-    neu = networkutils.Neutron('192.168.100.60', 'admin', 'minhkma', 'admin')
+    nov = novautils.Nova('192.168.100.114', 'admin', 'locdev', 'admin')
+    neu = networkutils.Neutron('192.168.100.114', 'admin', 'locdev', 'admin')
     action = args.pop(0)
     if action == 'nova':
         # print('abc')
@@ -39,12 +39,12 @@ def handle(bot, update, args):
         list_services = []
         for dict_service in dict_services:
             list_service = []
-            print(dict_service)
+            # print(dict_service)
             list_service.extend([dict_service['agent_type'],
                                 dict_service['host'],
                                 str(dict_service['alive'])])
             list_services.append(list_service)
-        print(list_services)
+        # print(list_services)
         msg = convert_keyboard_inline(list_services)
         # print(msg)
         update.message.reply_text(u"Agent Neutron",
