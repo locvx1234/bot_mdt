@@ -40,14 +40,29 @@ def choose(bot, update):
     if query_data == 'list_network' or query_data == 'back_list_network':
         list_network(bot, query)
         return CHOOSING
-    elif query_data.startswith('list_network_'):
+    elif query_data.startswith('list_network_') or query_data == 'back_list_network_menu':
         list_network_menu(bot, query)
         return CHOOSING
-    elif query_data == 'back_menu_network':
+    elif query_data == 'back_network_menu':
         menu_network(bot, query)
         return CHOOSING
     elif query_data.startswith('detail_network_'):
         detail_network(bot, query)
+        return ConversationHandler.END
+    elif query_data.startswith('subnet_menu_') or query_data.startswith('b_subn_menu_'):
+        menu_subnet(bot, query)
+        return CHOOSING
+    elif query_data.startswith('list_subnet_'):
+        list_subnet(bot, query)
+        return CHOOSING
+    elif query_data.startswith('subnet_'):
+        list_subnet_menu(bot, query)
+        return CHOOSING
+    elif query_data.startswith('detail_subnet_'):
+        detail_subnet(bot, query)
+        return ConversationHandler.END
+    elif query_data.startswith('delete_subnet_'):
+        delete_subnet(bot, query)
         return ConversationHandler.END
     elif query_data.startswith('delete_network_'):
         delete_network(bot, query)
@@ -75,7 +90,7 @@ def list_network(bot, query):
             name = item["name"]
 
         list_net.append([InlineKeyboardButton(name, callback_data='list_network' + '_' + item["id"])])
-    list_net.append([InlineKeyboardButton("<< Back to network menu", callback_data='back_menu_network')])
+    list_net.append([InlineKeyboardButton("<< Back to network menu", callback_data='back_network_menu')])
     print(list_net)
     reply_markup = InlineKeyboardMarkup(list_net)
     bot.edit_message_text(text='List networks id:',
@@ -87,10 +102,10 @@ def list_network(bot, query):
 def list_network_menu(bot, query):
     query_data = query.data
     network_id = query_data[13:]
-
+    print('list_network_menu network_id: ' + network_id)
     options = [[InlineKeyboardButton("Detail", callback_data='detail_network' + '_' + network_id),
                 InlineKeyboardButton("Delete", callback_data='delete_network' + '_' + network_id)],
-               [InlineKeyboardButton("Subnet", callback_data='subnet_network' + '_' + network_id),
+               [InlineKeyboardButton("Subnet", callback_data='subnet_menu' + '_' + network_id),
                 InlineKeyboardButton("<< Back", callback_data='back_list_network')]]
 
     reply_markup = InlineKeyboardMarkup(options)
@@ -129,6 +144,91 @@ def detail_network(bot, query):
                           message_id=query.message.message_id, parse_mode='Markdown')
 
 
+def menu_subnet(bot, query):
+    query_data = query.data
+    network_id = query_data[12:]
+
+    options = [[InlineKeyboardButton("List subnet", callback_data='list_subnet' + '_' + network_id),
+                InlineKeyboardButton("Create subnet", callback_data='create_subnet' + '_' + network_id)],
+               [InlineKeyboardButton("<< Back", callback_data='back_list_network_menu')]]
+
+    reply_markup = InlineKeyboardMarkup(options)
+    bot.edit_message_text(text='Options:',
+                          chat_id=query.message.chat_id,
+                          message_id=query.message.message_id,
+                          reply_markup=reply_markup)
+
+
+def list_subnet(bot, query):
+    list_subnet = []
+    net = networkutils.Neutron()
+    query_data = query.data
+    network_id = query_data[12:]
+    for item in net.list_subnet(network_id):
+        print('list_subnet' + ': ' + item["id"])
+        if item["name"] == '':
+            name = item['id']
+        else:
+            name = item["name"]
+        list_subnet.append([InlineKeyboardButton(name, callback_data='subnet' + '_' + item["id"])])
+
+    list_subnet.append([InlineKeyboardButton("<< Back to subnet menu", callback_data='b_subn_menu_' + network_id)])
+    reply_markup = InlineKeyboardMarkup(list_subnet)
+    if len(list_subnet) > 1:
+        text = 'List subnets:'
+    else:
+        text = 'Empty!'
+    bot.edit_message_text(text=text,
+                          chat_id=query.message.chat_id,
+                          message_id=query.message.message_id,
+                          reply_markup=reply_markup)
+
+
+def list_subnet_menu(bot, query):
+    query_data = query.data
+    subnet_id = query_data[7:]
+
+    options = [[InlineKeyboardButton("Detail", callback_data='detail_subnet' + '_' + subnet_id)],
+               [InlineKeyboardButton("Delete", callback_data='delete_subnet' + '_' + subnet_id)]]
+
+    reply_markup = InlineKeyboardMarkup(options)
+    bot.edit_message_text(text='Subnet options:',
+                          chat_id=query.message.chat_id,
+                          message_id=query.message.message_id,
+                          reply_markup=reply_markup)
+
+
+def detail_subnet(bot, query):
+    net = networkutils.Neutron()
+    query_data = query.data
+    subnet_id = query_data[14:]
+    subnet_detail = net.show_subnet(subnet_id)
+    output = "*Detail subnet*" + \
+             "```" + "\n" + "ID: " + subnet_detail["id"] + "\n" + \
+             "Name: " + subnet_detail["name"] + "\n" +  \
+             "Description: " + subnet_detail["description"] + "\n" + \
+             "IP version: " + str(subnet_detail["ip_version"]) + "\n" + \
+             "Cidr: " + subnet_detail["cidr"] + "\n" + \
+             "Pool: " + str(subnet_detail["allocation_pools"]) + "\n" + \
+             "DNS: " + str(subnet_detail["dns_nameservers"]) + "\n" + \
+             "DHCP: " + str(subnet_detail["enable_dhcp"]) + "\n" + \
+             "Gateway: " + str(subnet_detail["gateway_ip"]) + "\n" + \
+             "```"
+    bot.edit_message_text(text=output,
+                          chat_id=query.message.chat_id,
+                          message_id=query.message.message_id, parse_mode='Markdown')
+
+
+def delete_subnet(bot, query):
+    net = networkutils.Neutron()
+    query_data = query.data
+    subnet_id = query_data[14:]
+    net.delete_subnet(subnet_id)
+    bot.edit_message_text(text="Delete complete",
+                          chat_id=query.message.chat_id,
+                          message_id=query.message.message_id)
+
+
 def delete_network(bot, query):
     net = networkutils.Neutron()
     query_data = query.data
@@ -142,6 +242,7 @@ def delete_network(bot, query):
 # def typing_network_name(bot, que)
 
 
+# Choose Admin state up Yes or No
 def network_admin_choice(bot, update, user_data):
     network_name = update.message.text
     user_data['name'] = network_name
@@ -154,6 +255,7 @@ def network_admin_choice(bot, update, user_data):
     return CHOOSE_NETWORK_SHARED
 
 
+# Choose shared Yes or No
 def network_shared_choice(bot, update, user_data):
     print(update)
     user_data['admin_state_up'] = update.callback_query.data

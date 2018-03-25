@@ -167,7 +167,7 @@ class Neutron(openstackutils.Base):
 
     def show_subnet(self, subnet_id):
         """Show information of s by id"""
-        for subnet in self.list_subnet():
+        for subnet in self.subnets["subnets"]:
             if subnet['id'] == subnet_id:
                 return subnet
 
