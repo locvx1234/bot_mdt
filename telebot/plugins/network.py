@@ -1,6 +1,7 @@
 """Network plugin
 /network in openstack!
 """
+import ipaddress
 import pprint
 from telebot.plugins import networkutils
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -13,7 +14,8 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-CHOOSING, TYPING_NETWORK_NAME, CHOOSE_NETWORK_ADMIN, CHOOSE_NETWORK_SHARED, CREATE_NETWORK = range(5)
+CHOOSING, TYPING_NETWORK_NAME, CHOOSE_NETWORK_ADMIN, CHOOSE_NETWORK_SHARED, CREATE_NETWORK, CHOOSE_SUBNET_NAME, CHOOSE_IP_VER, \
+ TYPING_SUBNET, CREATE_SUBNET = range(9)
 
 
 def handle(bot, update):
@@ -55,6 +57,11 @@ def choose(bot, update):
     elif query_data.startswith('list_subnet_'):
         list_subnet(bot, query)
         return CHOOSING
+    elif query_data.startswith('create_subnet_'):
+        print(update)
+        return CHOOSE_SUBNET_NAME
+        # choose_subnet_name(bot, update)
+
     elif query_data.startswith('subnet_'):
         list_subnet_menu(bot, query)
         return CHOOSING
@@ -184,9 +191,65 @@ def list_subnet(bot, query):
                           reply_markup=reply_markup)
 
 
+def choose_subnet_name(bot, update, user_data):
+    network_id = update.callback_query.data[14:]
+    user_data['network_id'] = network_id
+    print('network_id: ' + user_data['network_id'])
+    update.callback_query.message.reply_text("Alright, a new subnet. Please choose a name for your subnet.")
+    return CHOOSE_IP_VER
+
+
+def choose_ip_version(bot, update, user_data):
+    subnet_name = update.message.text
+    user_data['name'] = subnet_name
+    keyboard = [[InlineKeyboardButton('4', callback_data="4"),
+                 InlineKeyboardButton('6', callback_data="6")]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.message.reply_text(
+        'Subnet {} has IP version: '.format(subnet_name),
+        reply_markup=reply_markup)
+    return TYPING_SUBNET
+
+
+def typing_subnet(bot, update, user_data):
+    if 'ip_version' in user_data:
+        print("pass")
+        pass
+    else:
+        ip_version = update.callback_query.data
+        user_data['ip_version'] = int(ip_version)
+        print('user_data: ' + str(user_data))
+    update.callback_query.message.reply_text('Typing network address: (eg 192.168.1.0/24)')
+    return CREATE_SUBNET
+
+
+def create_subnet(bot, update, user_data):
+    network_addr = update.message.text
+    net = networkutils.Neutron()
+    if networkutils.validate_network(network_addr):
+        cidr = ipaddress.ip_network(network_addr)
+        if user_data["ip_version"] == cidr.version:
+            cidr_list = net.list_cidr(user_data['network_id'])
+            if networkutils.check_overlaps(cidr, cidr_list):
+                update.message.reply_text('Overlaps with another subnet. Type again')
+            else:
+                user_data['cidr'] = network_addr
+                user_data['enable_dhcp'] = True
+                user_data['gateway_ip'] = None
+                # print(user_data)
+                net.create_subnet(user_data)
+                update.message.reply_text('Create subnet complete')
+                return ConversationHandler.END
+        else:
+            update.message.reply_text('Network Address and IP version are inconsistent. Type again')
+    else:
+        update.message.reply_text('Incorrect format for network address. Type again')
+    return CREATE_SUBNET
+
+
 def list_subnet_menu(bot, query):
     query_data = query.data
-    subnet_id = query_data[7:]
+    subnet_id = query_data[7:]  # subnet_
 
     options = [[InlineKeyboardButton("Detail", callback_data='detail_subnet' + '_' + subnet_id)],
                [InlineKeyboardButton("Delete", callback_data='delete_subnet' + '_' + subnet_id)]]
@@ -239,9 +302,6 @@ def delete_network(bot, query):
                           message_id=query.message.message_id)
 
 
-# def typing_network_name(bot, que)
-
-
 # Choose Admin state up Yes or No
 def network_admin_choice(bot, update, user_data):
     network_name = update.message.text
@@ -263,10 +323,6 @@ def network_shared_choice(bot, update, user_data):
     keyboard = [[InlineKeyboardButton('Yes', callback_data="True"),
                  InlineKeyboardButton('NO', callback_data="False")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
-
-    # bot.edit_message_text(text='Network {}, Admin state up : {}. Shared ?'.format(user_data['network_name'], user_data['admin_state_up']),
-    #                       chat_id=query.message.chat_id, message_id=query.message.message_id, reply_markup=reply_markup)
-
     update.callback_query.message.reply_text(
         'Network {}, Admin state up : {}. Shared ?'.format(user_data['name'], user_data['admin_state_up']),
         reply_markup=reply_markup)
@@ -300,6 +356,12 @@ conv_handler = ConversationHandler(
         CHOOSE_NETWORK_ADMIN: [MessageHandler(Filters.text, network_admin_choice, pass_user_data=True)],
         CHOOSE_NETWORK_SHARED: [CallbackQueryHandler(network_shared_choice, pass_user_data=True)],
         CREATE_NETWORK: [CallbackQueryHandler(create_network, pass_user_data=True)],
+        CHOOSE_SUBNET_NAME: [CallbackQueryHandler(choose_subnet_name, pass_user_data=True)],
+        CHOOSE_IP_VER: [MessageHandler(Filters.text, choose_ip_version, pass_user_data=True)],
+        TYPING_SUBNET: [CallbackQueryHandler(typing_subnet, pass_user_data=True),
+
+                        ],
+        CREATE_SUBNET: [MessageHandler(Filters.text, create_subnet, pass_user_data=True)],
     },
 
     fallbacks=[CommandHandler('close', close)]
