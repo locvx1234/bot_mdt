@@ -32,6 +32,9 @@ class Nova(openstackutils.Base):
                     server.stop()
                 if action_vm == 'start':
                     server.start()
+                if action_vm == 'delete':
+                    server.delete()
+
 
     def service(self):
         list_info_services = []

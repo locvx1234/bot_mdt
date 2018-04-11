@@ -1,14 +1,15 @@
 from telebot.plugins import novautils
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackQueryHandler,\
-    ConversationHandler
+    ConversationHandler, MessageHandler, Filters
 
-FIRST, SECOND, THIRD, FOURTH = range(4)
+FIRST, SECOND, THIRD, FOURTH, CHOOSE_NAME, NAME = range(6)
 data = {}
-nov = novautils.Nova('192.168.100.114', 'admin', 'locdev', 'admin')
 
 
-def handle(bot, update, args):
+
+def handle(bot, update):
+    query = update.callback_query
     keyboard = [
         [InlineKeyboardButton(u"Network", callback_data=str(FIRST))]
     ]
@@ -19,11 +20,15 @@ def handle(bot, update, args):
         u"Press network",
         reply_markup=reply_markup
     )
-    data['name'] = args.pop(0)
+    # bot.edit_message_reply_markup(
+    #     chat_id=query.message.chat_id,
+    #     message_id=query.message.message_id,
+    #     reply_markup=reply_markup)
     return FIRST
 
 
 def first(bot, update):
+    nov = novautils.Nova('192.168.100.114', 'admin', 'locdev', 'admin')
     query = update.callback_query
     dict_networks = nov.networks()
     print(dict_networks)
@@ -47,6 +52,7 @@ def first(bot, update):
 
 
 def second(bot, update):
+    nov = novautils.Nova('192.168.100.114', 'admin', 'locdev', 'admin')
     query = update.callback_query
     data["network"] = query.data
     dict_images = nov.list_images()
@@ -66,6 +72,7 @@ def second(bot, update):
 
 
 def third(bot, update):
+    nov = novautils.Nova('192.168.100.114', 'admin', 'locdev', 'admin')
     query = update.callback_query
     data["image"] = query.data
     dict_flavors = nov.list_flavors()
@@ -80,30 +87,53 @@ def third(bot, update):
         chat_id=query.message.chat_id,
         message_id=query.message.message_id,
         reply_markup=reply_markup)
-    return FOURTH
+    return CHOOSE_NAME
 
 
-def fourth(bot, update):
+# def fourth(bot, update):
+#     nov = novautils.Nova('192.168.100.114', 'admin', 'locdev', 'admin')
+#     # query = update.callback_query
+#     # data['flavor'] = query.data
+#     # print(data)
+#     bot.edit_message_text(
+#         chat_id=query.message.chat_id,
+#         message_id=query.message.message_id,
+#         text=str(data))
+#     nov.create_vm(name= data['name'],
+#                   image= data['image'],
+#                   flavor= data['flavor'],
+#                   nic= data['network'])
+
+
+def choose_name(bot, update):
     query = update.callback_query
     data['flavor'] = query.data
+    update.callback_query.message.reply_text(
+        "Alright, a new VM. Please choose a name for your VM.")
+    return NAME
+
+def name(bot, update):
+    name_vm = update.message.text
+    # data['flavor'] = update.callback_query.data
+    data['name'] = name_vm
     print(data)
-    bot.edit_message_text(
-        chat_id=query.message.chat_id,
-        message_id=query.message.message_id,
-        text=str(data))
+    nov = novautils.Nova('192.168.100.114', 'admin', 'locdev', 'admin')
     nov.create_vm(name= data['name'],
                   image= data['image'],
                   flavor= data['flavor'],
                   nic= data['network'])
-    return
+    update.message.reply_text('Create VM: {}.'
+                              '\nPlease go to dashboard to view'.format(name_vm))
 
 conv_handler = ConversationHandler(
-    entry_points=[CommandHandler('create', handle, pass_args=True)],
+    entry_points=[CommandHandler('create', handle)],
     states={
         FIRST: [CallbackQueryHandler(first)],
         SECOND: [CallbackQueryHandler(second)],
         THIRD: [CallbackQueryHandler(third)],
-        FOURTH: [CallbackQueryHandler(fourth)]
+        # FOURTH: [CallbackQueryHandler(fourth)],
+        CHOOSE_NAME: [CallbackQueryHandler(choose_name)],
+        NAME: [MessageHandler(Filters.text, name)]
     },
     fallbacks=[CommandHandler('create', handle, pass_args=True)],
 )
