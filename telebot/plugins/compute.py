@@ -1,5 +1,5 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telebot.plugins import novautils
+from telebot.plugins import novautils, imageutils
 from  telebot.plugins import networkutils
 from telegram.ext import CommandHandler, CallbackQueryHandler,\
     ConversationHandler, RegexHandler, MessageHandler, Filters
@@ -294,9 +294,10 @@ def first(bot, update):
 
 def second(bot, update):
     nov = novautils.Nova('192.168.100.114', 'admin', 'locdev', 'admin')
+    img = imageutils.Image('192.168.100.114', 'admin', 'locdev', 'admin')
     query = update.callback_query
     data["network"] = query.data
-    dict_images = nov.list_images()
+    dict_images = img.list_images()
     keyboard_images = nov.keybroad_items(dict_images)
     bot.edit_message_text(
         chat_id=query.message.chat_id,
@@ -374,7 +375,7 @@ def back_page_1(bot, update):
 
 
 conv_handler = ConversationHandler(
-    entry_points=[CommandHandler('nova', handle)],
+    entry_points=[CommandHandler('compute', handle)],
     states={
     CHOOSING: [CallbackQueryHandler(choose)],
     FIRST: [CallbackQueryHandler(first)],
@@ -383,5 +384,5 @@ conv_handler = ConversationHandler(
     FOURTH: [CallbackQueryHandler(choose_name)],
     FIFTH: [MessageHandler(Filters.text, name)]
     },
-    fallbacks=[CommandHandler('nova', handle)]
+    fallbacks=[CommandHandler('compute', handle)]
 )

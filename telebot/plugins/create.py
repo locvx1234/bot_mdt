@@ -1,4 +1,4 @@
-from telebot.plugins import novautils
+from telebot.plugins import novautils, imageutils
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CommandHandler, CallbackQueryHandler,\
     ConversationHandler, MessageHandler, Filters
@@ -53,9 +53,10 @@ def first(bot, update):
 
 def second(bot, update):
     nov = novautils.Nova('192.168.100.114', 'admin', 'locdev', 'admin')
+    img = imageutils.Image('192.168.100.114', 'admin', 'locdev', 'admin')
     query = update.callback_query
     data["network"] = query.data
-    dict_images = nov.list_images()
+    dict_images = img.list_images()
     keyboard_images = nov.keybroad_items(dict_images)
     bot.edit_message_text(
         chat_id=query.message.chat_id,

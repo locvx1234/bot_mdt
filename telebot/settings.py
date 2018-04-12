@@ -2,11 +2,11 @@
 JOB_PLUGINS = ['remind']
 
 # List of plugins that use ConverstationHandler
-CONV_PLUGINS = ['create', 'vm', 'check', 'nova']
+CONV_PLUGINS = ['create', 'vm', 'check', 'compute']
 
 # List of plugins which use normal command
 NORMAL_PLUGINS = ['echo', 'meditech']
 
-Continue_PLUGINS = ['openstackutils', 'novautils', 'neutronutils']
+Continue_PLUGINS = ['openstackutils', 'novautils', 'neutronutils', 'imageutils']
 
 ARGS_PLUGINS = []
