@@ -10,6 +10,10 @@ import telebot.plugins
 from telebot import emojies
 from telebot import settings
 
+from telebot.plugins import create
+
+from telegram.ext import ConversationHandler
+from telegram.ext import callbackqueryhandler
 from telegram.ext import CommandHandler
 from telegram.ext import Updater
 
@@ -43,6 +47,10 @@ class Bot(object):
         for plugin in self.plugins.keys():
             if plugin in settings.Continue_PLUGINS:
                 continue
+            elif plugin in settings.ARGS_PLUGINS:
+                _handler = CommandHandler(plugin,
+                                          self.plugins[plugin]['handler'],
+                                          pass_args=True)
             elif plugin in settings.JOB_PLUGINS:
                 _handler = CommandHandler(plugin,
                                           self.plugins[plugin]['handler'],
@@ -50,8 +58,8 @@ class Bot(object):
                                           pass_job_queue=True,
                                           pass_chat_data=True)
             elif plugin in settings.CONV_PLUGINS:
-                # NOTE(namnh): Will do something in here
-                pass
+                module = importlib.import_module('telebot.plugins.' + plugin)
+                _handler = module.conv_handler
             elif plugin in settings.NORMAL_PLUGINS:
                 _handler = CommandHandler(plugin,
                                           self.plugins[plugin]['handler'])
@@ -116,7 +124,8 @@ class Bot(object):
     def init_plugins(self):
         for _, name, _ in pkgutil.iter_modules(telebot.plugins.__path__):
             if name in settings.JOB_PLUGINS or name in settings.NORMAL_PLUGINS \
-                    or name in settings.CONV_PLUGINS:
+                    or name in settings.CONV_PLUGINS \
+                    or name in settings.ARGS_PLUGINS:
                 try:
                     LOG.debug('Plugin: {}'.format(name))
                     module = importlib.import_module('telebot.plugins.' + name)
